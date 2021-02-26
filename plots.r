@@ -564,7 +564,9 @@ dd <- melt(
 dd$program[dd$program == "IF"] <- "SFI:IF"
 dd$program[dd$program == "IvP"] <- "SFI:IvP"
 dd$panel[dd$panel == "humanities and social sciences"] <-
-  "humanities and\nsocial sciences"
+  "Humanities and\nSocial Sciences"
+dd$panel[dd$panel == "natural sciences"] <-
+  "Mathematics, Natural\nand Engineering Sciences"
 #dd <- dd[!is.na(dd$manual) & dd$section != "other comments",]
 #dd$Sscore <- (dd$Sscore * 5) + 1
 dd$variable <- as.character(dd$variable)
@@ -583,7 +585,7 @@ bpcl[1] <- "#762525"#"#1f1230FF"
 figurePar <- list(
   filename = paste0("./plots/Figure A1.", figureFormat),
   height = 1000,
-  width = 1000,
+  width = 1250,
   res = 300,
   units = "px"
 )
@@ -600,7 +602,7 @@ ggplot(data = dd, aes(y = value)) +
   )) +
   facet_wrap(~ panel, nrow=1) +
   ylab("(sentiment) score") +
-  ggtitle("SNSF review sections by panel") +
+  ggtitle("SNSF review sentiments by panel") +
   scale_y_continuous(
     limits = c(0, 1), breaks = c(0, 0.5, 1), expand = c(0, 0),
     labels = c("most negative", "neutral", "most positive")
@@ -650,7 +652,7 @@ ggplot(data = dd, aes(y = value)) +
   )) +
   facet_wrap(~ language, nrow=1) +
   ylab("(sentiment) score") +
-  ggtitle("SNSF review sections by language") +
+  ggtitle("SNSF review sentiments by language") +
   scale_y_continuous(
     limits = c(0, 1), breaks = c(0, 0.5, 1), expand = c(0, 0),
     labels = c("most negative", "neutral", "most positive")
