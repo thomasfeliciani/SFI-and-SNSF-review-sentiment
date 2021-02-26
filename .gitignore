@@ -2,6 +2,15 @@
 .Rhistory
 .Rapp.history
 
+# Data folders
+/data/*
+/other/*
+/output/*
+/plots/*
+
+# Test scripts
+test.r
+
 # Session Data files
 .RData
 
