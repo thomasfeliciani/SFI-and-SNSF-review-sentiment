@@ -174,79 +174,50 @@ sectionLabels <- c(
   "other comments"
 )
 
-d <- data.frame(
-  data.frame(
-    revID = r$revID,
-    funder = r$funder,
-    fundingDecision = r$fundingDecision,
-    trueScore = r$trueScore,
-    manual = r$aggrManual,
-    TextBlob = r$aggrT,
-    VADER = r$aggrV#,
-    #Sscore = d[,paste0("S", sec, "score")],
-    #aggrManual = d$aggrManual,
-    #aggrT = d$aggrT,
-    #aggrT = d$aggrV,
-    #aggrScore = d$aggrScore,
+d <- r[r$funder == "SNSF",]
+for (sec in 1:7){
+  temp <- data.frame(
+    revID = d$revID,
+    funder = d$funder,
+    program = d$program,
+    fundingDecision = d$fundingDecision,
+    trueScore = d$trueScore,
+    manual = d[,paste0("S", sec, "ma")],
+    TextBlob = d[,paste0("S", sec, "t")],
+    VADER = d[,paste0("S", sec, "v")],
+    Sscore = d[,paste0("S", sec, "score")],
+    section = rep(SNSFsectionLabels[sec], times = nrow(d))
   )
-)
-#r$trueScore, r$aggrManual, r$aggrT, r$aggrV
-
-d <- d[d$funder == "SNSF",]
-
-#
-#dd <- melt(
-#  data = d[, c(
-#    "revID","fundingDecision", "trueScore", "S1ma", "S1t", "S1v", "S1score")],
-#  id.vars = names(d)[c(1:7, 50:55)],
-#  value.name = names(d)[8:]
-#)
-
-#
-#for (sec in 1:7){
-# temp <- data.frame(
-#    revID = d$revID,
-#    fundingDecision = d$fundingDecision,
-#    trueScore = d$trueScore,
-#    manual = d[,paste0("S", sec, "ma")],
-#    TextBlob = d[,paste0("S", sec, "t")],
-#    VADER = d[,paste0("S", sec, "v")],
-#    Sscore = d[,paste0("S", sec, "score")],
-#    #aggrManual = d$aggrManual,
-#    #aggrT = d$aggrT,
-#    #aggrT = d$aggrV,
-#    #aggrScore = d$aggrScore,
-#    section = rep(sectionLabels[sec], times = nrow(d))
-#  )
-#  ifelse(
-#    sec == 1,
-#    dd <- temp,
-#    dd <- rbind(dd, temp)
-#  )
-#}
-#dd$section <- factor(dd$section, levels = sectionLabels)#
+  ifelse(
+    sec == 1,
+    dd <- temp,
+    dd <- rbind(dd, temp)
+  )
+}
+dd$section <- factor(dd$section, levels = sectionLabels)#
 
 # Transforming SA scores in [-1,1] to match the manual scale [0,1]:
-d$VADER <- (d$VADER + 1) / 2
-d$TextBlob <- (d$TextBlob + 1) / 2
+dd$VADER <- (dd$VADER + 1) / 2
+dd$TextBlob <- (dd$TextBlob + 1) / 2
 
 dd <- melt(
-  data = d,
-  id.vars = c("revID", "funder", "fundingDecision", "trueScore")
+  data = dd,
+  id.vars = c(
+    "revID", "funder", "program", "fundingDecision", "trueScore",
+    "Sscore", "section")
 )
-#dd <- dd[!is.na(dd$Sscore) & dd$section != "other comments",]
-#dd$Sscore <- (dd$Sscore * 5) + 1
-#dd$trueScore <- (dd$trueScore * 5) + 1
+dd <- dd[!is.na(dd$Sscore) & dd$section != "other comments",]
+#dd$Sscore <- as.character((dd$Sscore * 5) + 1)
 
-dd$trueScore <- as.character(round((dd$trueScore * 5) + 1))
-dd$trueScore[as.numeric(dd$trueScore) <= 3] <- "1 to 3       "
+dd$Sscore <- (dd$Sscore * 5) + 1
+dd$Sscore[dd$Sscore <= 3] <- "1 to 3      "
 
 
 
 figurePar <- list(
   filename = paste0("./plots/Figure 2.", figureFormat),
-  height = 900,
-  width = 1200,
+  height = 1150,
+  width = 1800,
   res = 300,
   units = "px"
 )
@@ -256,9 +227,9 @@ ifelse(
   do.call(tiff, figurePar)
 )
 
-ggplot(data = dd, aes(x = trueScore, y = value)) +
+ggplot(data = dd, aes(x = Sscore, y = value)) +
   geom_boxplot(aes(color = variable, fill = variable)) +
-  #facet_wrap(~section, nrow = 2) +
+  facet_wrap(~section, nrow = 2) +
   xlab("review score\n(Likert scale from 1 to 6)") +
   ylab("sentiment") +
   ggtitle("SNSF reviews") +
