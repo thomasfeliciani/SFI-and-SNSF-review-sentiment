@@ -122,37 +122,53 @@ ifelse(
   do.call(tiff, figurePar)
 )
 
-ggplot(data = dd, aes(x = section, y = value)) +
-  geom_boxplot(aes(
-    color = factor(variable, levels = levs),
+
+ggplot(
+  data = dd,
+  aes(
+    x = section,
+    y = value,
+    #color = factor(variable, levels = levs),
     fill = factor(variable, levels = levs)
-  )) +
+  )
+) +
+  geom_violin(
+    position = position_dodge(width = 0.7),
+    scale = "width",
+    color = NA
+  ) +
+  geom_boxplot(
+    position = position_dodge(width = 0.7),
+    color = "black", alpha = 0, width = 0.2
+  ) +
   geom_vline(
     xintercept = seq(0, length(unique(dd$section))) + .5,
     color="#f5f5f5"
   ) +
-  facet_wrap(~ program, ncol=1, scales = "free") +
+  facet_wrap(~ program, ncol = 1, scales = "free") +
   #facet_grid(cols = vars(program), space = "free", scales = "free") +
   xlab("review section") +
   ylab("(sentiment) score") +
   ggtitle("sentiment:\nSFI and SNSF review texts") +
   scale_y_continuous(
-    limits = c(0, 1), breaks = c(0, 0.5, 1), expand = c(0, 0),
+    limits = c(0, 1.05), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
     labels = c("most\nnegative", "neutral", "most\npositive")
   ) +
   scale_color_manual(values = bpcl) +
-  scale_fill_manual(values = alpha(bpcl, 0.5)) +
+  scale_fill_manual(values = alpha(bpcl, 0.8)) +
   theme(
     plot.title.position = "plot",
     panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
     panel.grid.major.y = element_line(color = "#f5f5f5"),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
     panel.grid.major.x = element_blank(),
     #panel.grid.major.x = element_line(color = "#f5f5f5", size = 30),
     panel.border = element_blank(),
     legend.position = "top",
     legend.key.size = unit(10, "pt"),
-    legend.background=element_blank(),
-    legend.key=element_blank(),
+    legend.background = element_blank(),
+    legend.key = element_blank(),
     legend.title = element_blank(),
     strip.background = element_rect(fill = "#ebebeb"),
     axis.line = element_line(),
@@ -212,6 +228,7 @@ dd <- dd[!is.na(dd$Sscore) & dd$section != "other comments",]
 dd$Sscore <- (dd$Sscore * 5) + 1
 dd$Sscore[dd$Sscore <= 3] <- "1 to 3      "
 
+dd <- dd[!is.na(dd$value),]
 
 
 figurePar <- list(
@@ -227,8 +244,19 @@ ifelse(
   do.call(tiff, figurePar)
 )
 
-ggplot(data = dd, aes(x = Sscore, y = value)) +
-  geom_boxplot(aes(color = variable, fill = variable)) +
+ggplot(
+  data = dd,
+  aes(x = Sscore, y = value, color = variable, fill = variable)
+) +
+  geom_violin(
+    position = position_dodge(width = 0.7),
+    scale = "width"#, color = NA
+  ) +
+  geom_boxplot(
+    position = position_dodge(width = 0.7),
+    color = "black", alpha = 0.8, width = 0.2
+  ) +
+  #geom_boxplot(aes(color = variable, fill = variable)) +
   facet_wrap(~section, nrow = 2) +
   xlab("review score\n(Likert scale from 1 to 6)") +
   ylab("sentiment") +
@@ -238,16 +266,18 @@ ggplot(data = dd, aes(x = Sscore, y = value)) +
     color="#f5f5f5"
   ) +
   scale_y_continuous(
-    limits = c(0,1), breaks = c(0, 0.5, 1), expand = c(0, 0),
+    limits = c(0, 1.03), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
     labels = c("most\nnegative", "neutral", "most\npositive")
   ) +
-  #scale_x_discrete(limits=c(1, 3,4,5)) +
-  scale_color_viridis_d(begin = 0.4, option = "D") +
-  scale_fill_viridis_d(begin = 0.4, option = "D", alpha = 0.3) +
+  scale_color_manual(values = bpcl[-1]) +
+  scale_fill_manual(values = alpha(bpcl[-1], 0.8)) +
+  #scale_color_viridis_d(begin = 0.4, option = "D") +
+  #scale_fill_viridis_d(begin = 0.4, option = "D", alpha = 0.3) +
   theme(
     panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
     panel.grid.major.y = element_line(color = "#f5f5f5"),
-    panel.grid.minor.y = element_blank(),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
     panel.border = element_blank(),
@@ -259,6 +289,61 @@ ggplot(data = dd, aes(x = Sscore, y = value)) +
   )
 
 dev.off()
+
+
+
+
+
+
+
+dd$Sscore[dd$Sscore == "1 to 3      "] <- 3
+dd$Sscore <- as.numeric(dd$Sscore)
+
+figurePar <- list(
+  filename = paste0("./plots/Figure 2b.", figureFormat),
+  height = 1300,
+  width = 1800,
+  res = 300,
+  units = "px"
+)
+ifelse(
+  figureFormat == "png",
+  do.call(png, figurePar),
+  do.call(tiff, figurePar)
+)
+
+ggplot(
+  data = dd,
+  aes(x = Sscore, y = value, color = variable, fill = variable)
+) +
+  geom_smooth(method = 'lm') +
+  facet_wrap(~section, nrow = 2, scales = "free_x") +
+  xlab("review score\n(Likert scale from 1 to 6)") +
+  ylab("sentiment") +
+  ggtitle("SNSF reviews") +
+  scale_y_continuous(
+    limits = c(0, 1.03), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
+    labels = c("most\nnegative", "neutral", "most\npositive")
+  ) +
+  scale_color_manual(values = bpcl[-1]) +
+  scale_fill_manual(values = alpha(bpcl[-1], 0.8)) +
+  theme(
+    panel.background = element_blank(),
+    panel.grid.major.y = element_line(color = "#f5f5f5"),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
+    panel.grid.major.x = element_line(color = "#f5f5f5"),
+    panel.grid.minor.x = element_blank(),
+    panel.border = element_blank(),
+    legend.background=element_blank(),
+    legend.key=element_blank(),
+    legend.title = element_blank(),
+    axis.line = element_line()#,
+  )
+
+dev.off()
+
+
 
 
 
@@ -299,6 +384,7 @@ dd$program[dd$program == "IF"] <- "SFI:IF"
 dd$program[dd$program == "IvP"] <- "SFI:IvP"
 
 # Discretizing manual scores into a standard number of bins:
+dd$manual_raw <- dd$manual
 manual <- c()
 for (i in 1:nrow(dd)){
   x <- dd$manual[i]
@@ -335,8 +421,19 @@ ifelse(
   do.call(tiff, figurePar)
 )
 
-ggplot(data = dd, aes(x = manual, y = value)) +
-  geom_boxplot(aes(color = variable, fill = variable)) +
+ggplot(
+  data = dd,
+  aes(x = manual, y = value, color = variable, fill = variable)
+) +
+  geom_violin(
+    position = position_dodge(width = 0.7),
+    scale = "width"#, color = NA
+  ) +
+  geom_boxplot(
+    position = position_dodge(width = 0.7),
+    color = "black", alpha = 0.8, width = 0.2
+  ) +
+  #geom_boxplot(aes(color = variable, fill = variable)) +
   facet_wrap(~program, nrow = 3) +
   xlab("manually coded sentiment") +
   ylab("algorithmic SA") +
@@ -346,16 +443,17 @@ ggplot(data = dd, aes(x = manual, y = value)) +
   ) +
   ggtitle("sentiment:\nSFI and SNSF reviews") +
   scale_y_continuous(
-    limits = c(0, 1), breaks = c(0, 0.5, 1), expand = c(0, 0),
+    limits = c(0, 1.03), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
     labels = c("most\nnegative", "neutral", "most\npositive")
   ) +
-  scale_color_viridis_d(begin = 0.7, option = "D") +
-  scale_fill_viridis_d(begin = 0.7, option = "D", alpha = 0.3) +
+  scale_color_manual(values = bpcl[-c(1:2)]) +
+  scale_fill_manual(values = alpha(bpcl[-c(1:2)], 0.8)) +
   theme(
     plot.title.position = "plot",
     panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
     panel.grid.major.y = element_line(color = "#f5f5f5"),
-    panel.grid.minor.y = element_blank(),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
     panel.border = element_blank(),
@@ -371,6 +469,62 @@ dev.off()
 
 
 
+figurePar <- list(
+  filename = paste0("./plots/Figure 3b.", figureFormat),
+  height = 1500,
+  width = 950,
+  res = 300,
+  units = "px"
+)
+ifelse(
+  figureFormat == "png",
+  do.call(png, figurePar),
+  do.call(tiff, figurePar)
+)
+
+ggplot(
+  data = dd,
+  aes(x = manual_raw, y = value, color = variable, fill = variable)
+) +
+  geom_smooth(method = 'lm') +
+  facet_wrap(~program, nrow = 3) +
+  xlab("manually coded sentiment") +
+  ylab("algorithmic SA") +
+  geom_vline(
+    xintercept = seq(0, length(unique(dd$manual))) + .5,
+    color="#f5f5f5"
+  ) +
+  ggtitle("sentiment:\nSFI and SNSF reviews") +
+  scale_x_continuous(
+    limits = c(0,1), breaks = 0:4/4,
+    labels = c(
+      "most negative", "moderate negrative", "neutral",
+      "moderate positive", "most positive")
+  ) +
+  scale_y_continuous(
+    limits = c(0, 1.03), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
+    labels = c("most\nnegative", "neutral", "most\npositive")
+  ) +
+  scale_color_manual(values = bpcl[-c(1:2)]) +
+  scale_fill_manual(values = alpha(bpcl[-c(1:2)], 0.8)) +
+  theme(
+    plot.title.position = "plot",
+    panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
+    panel.grid.major.y = element_line(color = "#f5f5f5"),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
+    panel.grid.major.x = element_line(color = "#f5f5f5"),
+    panel.grid.minor.x = element_blank(),
+    panel.border = element_blank(),
+    legend.background=element_blank(),
+    legend.key=element_blank(),
+    legend.title = element_blank(),
+    strip.background = element_rect(fill = "#ebebeb"),
+    axis.line = element_line(),
+    axis.text.x = element_text(angle = 35, hjust = 1)
+  )
+
+dev.off()
 
 
 
@@ -425,20 +579,29 @@ ggplot(
   data = dd,
   aes(x = funding, y = value, color = variable, fill = variable)
 ) +
-  geom_boxplot() +
+  geom_violin(
+    position = position_dodge(width = 0.7),
+    scale = "width"#, color = NA
+  ) +
+  geom_boxplot(
+    position = position_dodge(width = 0.7),
+    color = "black", alpha = 0.8, width = 0.2
+  ) +
+  #geom_boxplot() +
   facet_grid(cols = vars(variable), rows = vars(program)) +
   ggtitle("Sentiment score and funding decision") +
   ylab("sentiment") +
   scale_y_continuous(
-    breaks = c(0, 0.5, 1), limits = c(0, 1), expand = c(0,0),
+    limits = c(0,1.05), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
     labels = c("most negative", "neutral", "most positive")
   ) +
-  scale_color_viridis_d(begin = 0.4, option = "D") +
-  scale_fill_viridis_d(begin = 0.4, option = "D", alpha = 0.3) +
+  scale_color_manual(values = bpcl[-1]) +
+  scale_fill_manual(values = alpha(bpcl[-1], 0.8)) +
   theme(
     panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
     panel.grid = element_line(color = "#f5f5f5"),
-    panel.grid.minor.y = element_blank(),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
     panel.border = element_blank(),
     legend.position = "none",
     panel.spacing.y = unit(1, "lines"),
@@ -472,17 +635,23 @@ for (i in 1:nrow(dd)){
     dd$funding[i] <- "rejected"
   )
 }
-color <- viridisLite::viridis(n = 1, begin = 0.4, option = "D")
-#temp <- dd
-#temp$funding <- "overall"
-#dd <- rbind(dd, temp)
+
+dd <- melt(
+  data = dd,
+  id.vars = c("funding")
+)
+dd$variable <-
+  factor(as.character(dd$variable), levels = c("manual", "TextBlob"))
+
+
+#olor <- viridisLite::viridis(n = 1, begin = 0.4, option = "D")
 
 
 
 figurePar <- list(
   filename = paste0("./plots/Figure 5.", figureFormat),
-  height = 750,
-  width = 900,
+  height = 850,
+  width = 1000,
   res = 300,
   units = "px"
 )
@@ -492,22 +661,37 @@ ifelse(
   do.call(tiff, figurePar)
 )
 
-ggplot(data = dd, aes(x = funding, y = manual)) +
-  geom_boxplot(fill = color, color = color, alpha = 0.3) +
+ggplot(
+  data = dd,
+  aes(x = funding, y = value, fill = variable, color = variable)
+) +
+  geom_violin(
+    position = position_dodge(width = 0.7),
+    na.rm = TRUE, scale = "area", bw = 0.1#,
+    #color = alpha(bpcl[2], 0.8)#, alpha = 0.5
+  ) +
+  geom_boxplot(
+    position = position_dodge(width = 0.7),
+    na.rm = TRUE, color = "black", width = 0.15#, alpha = 0
+  ) +
   ggtitle("Statement level") +
   ylab("manually coded sentiment") +
   scale_y_continuous(
-    limits = c(0,1), breaks = c(0, 0.5, 1), expand = c(0, 0),
+    limits = c(0,1.05), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
     labels = c("most negative", "neutral", "most positive")
   ) +
+  scale_color_manual(values = bpcl[2:3]) +
+  scale_fill_manual(values = alpha(bpcl[2:3], 0.8)) +
   theme(
     #plot.title.position = "plot",
     panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
     panel.grid = element_line(color = "#f5f5f5"),
-    panel.grid.minor.y = element_blank(),
+    #panel.grid.minor.y = element_blank(),
     panel.border = element_blank(),
-    legend.background=element_blank(),
-    legend.key=element_blank(),
+    legend.position = "top",
+    legend.background = element_blank(),
+    legend.key = element_blank(),
     legend.title = element_blank(),
     axis.line = element_line(),
     axis.title.x = element_blank()
@@ -595,24 +779,38 @@ ifelse(
   do.call(tiff, figurePar)
 )
 
-ggplot(data = dd, aes(y = value)) +
-  geom_boxplot(aes(
+ggplot(
+  data = dd,
+  aes(
+    x = funder,
+    y = value,
     color = factor(variable, levels = levs),
     fill = factor(variable, levels = levs)
-  )) +
+  )
+) +
+  geom_violin(
+    position = position_dodge(width = 0.7),
+    scale = "width"#, color = NA
+  ) +
+  geom_boxplot(
+    position = position_dodge(width = 0.7),
+    color = "black", alpha = 0, width = 0.2
+  ) +
   facet_wrap(~ panel, nrow=1) +
   ylab("(sentiment) score") +
   ggtitle("SNSF review sentiments by panel") +
   scale_y_continuous(
-    limits = c(0, 1), breaks = c(0, 0.5, 1), expand = c(0, 0),
-    labels = c("most negative", "neutral", "most positive")
+    limits = c(0, 1.05), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
+    labels = c("most\nnegative", "neutral", "most\npositive")
   ) +
   scale_color_manual(values = bpcl) +
-  scale_fill_manual(values = alpha(bpcl, 0.5)) +
+  scale_fill_manual(values = alpha(bpcl, 0.8)) +
   theme(
     plot.title.position = "plot",
     panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
-    panel.grid.major.y =element_line(color = "#f5f5f5"),
+    panel.grid.major.y = element_line(color = "#f5f5f5"),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
     panel.border = element_blank(),
@@ -629,6 +827,7 @@ ggplot(data = dd, aes(y = value)) +
     axis.title.x = element_blank(),
     axis.ticks.x = element_blank()
   )
+
 dev.off()
 
 
@@ -645,24 +844,39 @@ ifelse(
   do.call(png, figurePar),
   do.call(tiff, figurePar)
 )
-ggplot(data = dd, aes(y = value)) +
-  geom_boxplot(aes(
+
+ggplot(
+  data = dd,
+  aes(
+    x = funder,
+    y = value,
     color = factor(variable, levels = levs),
     fill = factor(variable, levels = levs)
-  )) +
+  )
+) +
+  geom_violin(
+    position = position_dodge(width = 0.7),
+    scale = "width"#, color = NA
+  ) +
+  geom_boxplot(
+    position = position_dodge(width = 0.7),
+    color = "black", alpha = 0, width = 0.2
+  ) +
   facet_wrap(~ language, nrow=1) +
   ylab("(sentiment) score") +
   ggtitle("SNSF review sentiments by language") +
   scale_y_continuous(
-    limits = c(0, 1), breaks = c(0, 0.5, 1), expand = c(0, 0),
-    labels = c("most negative", "neutral", "most positive")
+    limits = c(0, 1.05), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
+    labels = c("most\nnegative", "neutral", "most\npositive")
   ) +
   scale_color_manual(values = bpcl) +
-  scale_fill_manual(values = alpha(bpcl, 0.5)) +
+  scale_fill_manual(values = alpha(bpcl, 0.8)) +
   theme(
     plot.title.position = "plot",
     panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
-    panel.grid.major.y =element_line(color = "#f5f5f5"),
+    panel.grid.major.y = element_line(color = "#f5f5f5"),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
     panel.border = element_blank(),
@@ -769,6 +983,7 @@ dd$program[dd$program == "IvP"] <- "SFI:IvP"
 #dd$Sscore <- (dd$Sscore * 5) + 1
 
 # Discretizing manual scores into a standard number of bins:
+dd$manual_raw <- dd$manual
 manual <- c()
 for (i in 1:nrow(dd)){
   x <- dd$manual[i]
@@ -806,10 +1021,12 @@ ifelse(
   do.call(tiff, figurePar)
 )
 
-ggplot(data = dd[dd$program == "SNSF",], aes(x = manual, y = value)) +
-  geom_boxplot(aes(color = variable, fill = variable)) +
+ggplot(
+  data = dd[dd$program == "SNSF",],
+  aes(x = manual_raw, y = value, color = variable, fill = variable)
+) +
+  geom_smooth(method = 'lm') +
   facet_wrap(~ section, nrow = 2) +
-  #facet_grid(cols = vars(section)) +
   xlab("manually coded sentiment") +
   ylab("algorithmic SA") +
   ggtitle("A. sentiment in SNSF review sections") +
@@ -817,18 +1034,25 @@ ggplot(data = dd[dd$program == "SNSF",], aes(x = manual, y = value)) +
     xintercept = seq(0, length(unique(dd$manual))) + .5,
     color="#f5f5f5"
   ) +
+  scale_x_continuous(
+    limits = c(0,1), breaks = 0:4/4,
+    labels = c(
+      "most negative", "moderate negrative", "neutral",
+      "moderate positive", "most positive")
+  ) +
   scale_y_continuous(
-    limits = c(0, 1), breaks = c(0, 0.5, 1), expand = c(0, 0),
+    limits = c(0, 1.05), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
     labels = c("most\nnegative", "neutral", "most\npositive")
   ) +
-  scale_color_viridis_d(begin = 0.7, option = "D") +
-  scale_fill_viridis_d(begin = 0.7, option = "D", alpha = 0.3) +
+  scale_color_manual(values = bpcl[-c(1,2)]) +
+  scale_fill_manual(values = alpha(bpcl[-c(1,2)], 0.8)) +
   theme(
     #plot.title.position = "plot",
     panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
     panel.grid.major.y = element_line(color = "#f5f5f5"),
-    panel.grid.minor.y = element_blank(),
-    panel.grid.major.x = element_blank(),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
+    panel.grid.major.x = element_line(color = "#f5f5f5"),
     panel.grid.minor.x = element_blank(),
     panel.border = element_blank(),
     legend.position = "top",
@@ -846,7 +1070,7 @@ dev.off()
 
 figurePar <- list(
   filename = paste0("./plots/Figure A3b.", figureFormat),
-  height = 1000,
+  height = 1100,
   width = 1300,
   res = 300,
   units = "px"
@@ -857,10 +1081,12 @@ ifelse(
   do.call(tiff, figurePar)
 )
 
-ggplot(data = dd[dd$program == "SFI:IvP",], aes(x = manual, y = value)) +
-  geom_boxplot(aes(color = variable, fill = variable)) +
+ggplot(
+  data = dd[dd$program == "SFI:IvP",],
+  aes(x = manual_raw, y = value, color = variable, fill = variable)
+) +
+  geom_smooth(method = 'lm') +
   facet_wrap(~ section, nrow = 1) +
-  #facet_grid(cols = vars(section)) +
   xlab("manually coded sentiment") +
   ylab("algorithmic SA") +
   ggtitle("B. sentiment in SFI:IvP review sections") +
@@ -868,18 +1094,25 @@ ggplot(data = dd[dd$program == "SFI:IvP",], aes(x = manual, y = value)) +
     xintercept = seq(0, length(unique(dd$manual))) + .5,
     color="#f5f5f5"
   ) +
+  scale_x_continuous(
+    limits = c(0,1), breaks = 0:4/4,
+    labels = c(
+      "most negative", "moderate negrative", "neutral",
+      "moderate positive", "most positive")
+  ) +
   scale_y_continuous(
-    limits = c(0, 1), breaks = c(0, 0.5, 1), expand = c(0, 0),
+    limits = c(0, 1.05), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
     labels = c("most\nnegative", "neutral", "most\npositive")
   ) +
-  scale_color_viridis_d(begin = 0.7, option = "D") +
-  scale_fill_viridis_d(begin = 0.7, option = "D", alpha = 0.3) +
+  scale_color_manual(values = bpcl[-c(1,2)]) +
+  scale_fill_manual(values = alpha(bpcl[-c(1,2)], 0.8)) +
   theme(
     #plot.title.position = "plot",
     panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
     panel.grid.major.y = element_line(color = "#f5f5f5"),
-    panel.grid.minor.y = element_blank(),
-    panel.grid.major.x = element_blank(),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
+    panel.grid.major.x = element_line(color = "#f5f5f5"),
     panel.grid.minor.x = element_blank(),
     panel.border = element_blank(),
     legend.position = "top",
@@ -887,18 +1120,18 @@ ggplot(data = dd[dd$program == "SFI:IvP",], aes(x = manual, y = value)) +
     legend.key=element_blank(),
     legend.title = element_blank(),
     strip.background = element_rect(fill = "#ebebeb"),
-    #strip.text.x = element_text(angle = 90),
     axis.line = element_line(),
-    axis.text.x = element_text(angle = 45, hjust = 1)
+    axis.text.x = element_text(angle = 75, hjust = 1)
   )
 dev.off()
 
 
 
 
+
 figurePar <- list(
   filename = paste0("./plots/Figure A3c.", figureFormat),
-  height = 1000,
+  height = 1100,
   width = 1300,
   res = 300,
   units = "px"
@@ -909,10 +1142,12 @@ ifelse(
   do.call(tiff, figurePar)
 )
 
-ggplot(data = dd[dd$program == "SFI:IF",], aes(x = manual, y = value)) +
-  geom_boxplot(aes(color = variable, fill = variable)) +
+ggplot(
+  data = dd[dd$program == "SFI:IF",],
+  aes(x = manual_raw, y = value, color = variable, fill = variable)
+) +
+  geom_smooth(method = 'lm') +
   facet_wrap(~ section, nrow = 1) +
-  #facet_grid(cols = vars(section)) +
   xlab("manually coded sentiment") +
   ylab("algorithmic SA") +
   ggtitle("C. sentiment in SFI:IF review sections") +
@@ -920,18 +1155,25 @@ ggplot(data = dd[dd$program == "SFI:IF",], aes(x = manual, y = value)) +
     xintercept = seq(0, length(unique(dd$manual))) + .5,
     color="#f5f5f5"
   ) +
+  scale_x_continuous(
+    limits = c(0,1), breaks = 0:4/4,
+    labels = c(
+      "most negative", "moderate negrative", "neutral",
+      "moderate positive", "most positive")
+  ) +
   scale_y_continuous(
-    limits = c(0, 1), breaks = c(0, 0.5, 1), expand = c(0, 0),
+    limits = c(0, 1.05), expand = c(0, 0),
+    breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
     labels = c("most\nnegative", "neutral", "most\npositive")
   ) +
-  scale_color_viridis_d(begin = 0.7, option = "D") +
-  scale_fill_viridis_d(begin = 0.7, option = "D", alpha = 0.3) +
+  scale_color_manual(values = bpcl[-c(1,2)]) +
+  scale_fill_manual(values = alpha(bpcl[-c(1,2)], 0.8)) +
   theme(
     #plot.title.position = "plot",
     panel.background = element_blank(),#element_rect(fill = "#f5f5f5"),
     panel.grid.major.y = element_line(color = "#f5f5f5"),
-    panel.grid.minor.y = element_blank(),
-    panel.grid.major.x = element_blank(),
+    panel.grid.minor.y = element_line(color = "#f5f5f5"),
+    panel.grid.major.x = element_line(color = "#f5f5f5"),
     panel.grid.minor.x = element_blank(),
     panel.border = element_blank(),
     legend.position = "top",
@@ -939,9 +1181,8 @@ ggplot(data = dd[dd$program == "SFI:IF",], aes(x = manual, y = value)) +
     legend.key=element_blank(),
     legend.title = element_blank(),
     strip.background = element_rect(fill = "#ebebeb"),
-    #strip.text.x = element_text(angle = 90),
     axis.line = element_line(),
-    axis.text.x = element_text(angle = 45, hjust = 1)
+    axis.text.x = element_text(angle = 75, hjust = 1)
   )
 dev.off()
 
