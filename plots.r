@@ -701,6 +701,7 @@ dev.off()
 
 
 
+
 # Figure A1_____________________________________________________________________
 d <- r[r$funder == "SNSF",]
 for (sec in 1:7){
@@ -1185,4 +1186,155 @@ ggplot(
     axis.text.x = element_text(angle = 75, hjust = 1)
   )
 dev.off()
+
+
+
+# Tables
+# New Table 5___________________________________________________________________
+rm(list = ls())
+library("writexl")
+load("./data/sfi+snsf review data.RDATA")
+#rr <- r[r$program %in% c("IF", "IvP"),]
+#IF <- r[r$program == "IF",]
+
+
+# Calculating proposal-level average scores:
+for(i in 1:nrow(r)) {
+  if (is.na(r$propID[i])) {
+    ifelse(
+      substr(
+        r$revID[i],
+        start = nchar(r$revID[i]) - 3,
+        stop = nchar(r$revID[i]) - 3
+      ) == " ",
+      r$propID[i] <- substr(r$revID[i], start=1, stop = nchar(r$revID[i]) -3),
+      r$propID[i] <- substr(r$revID[i], start=1, stop = nchar(r$revID[i]) -2)
+    )
+    if(substr(
+      r$propID[i],
+      start = nchar(r$propID[i]),
+      stop = nchar(r$propID[i])) == " ") {
+      r$propID[i] <- substr(r$propID[i], 1, stop = nchar(r$propID[i]) - 1)
+    }
+    
+    #r$propID[i] <- substr(r$revID[i], start = 1, stop = nchar(r$revID[i]) - 3)
+  }
+}
+# Fixing 2 typos in the IDs:
+r$propID[r$propID == "Ivp2016:2klrz"] <- "IvP2016:2klrz"
+r$propID[r$propID == "IF2016: 7Z9Ie"] <- "IF2016: 7Z9le"
+#table(r$propID)
+#View(cbind(substr(r$revID, nchar(r$revID), nchar(r$revID)) == "a", r))
+#sum(substr(r$revID, nchar(r$revID), nchar(r$revID)) == "a")
+#length(unique(subset(r, r$program != "SNSF")$propID))
+r$Ma <- r$Te <- r$Va <- NA
+pr <- c()
+for (i in 1:nrow(r)) {
+  if (substr(r$revID[i], nchar(r$revID[i]), nchar(r$revID[i])) == "a") {
+    r$Ma[i] <- mean(subset(r, r$propID == r$propID[i])$aggrManual, na.rm = TRUE)
+    r$Te[i] <- mean(subset(r, r$propID == r$propID[i])$aggrT, na.rm = TRUE)
+    r$Va[i] <- mean(subset(r, r$propID == r$propID[i])$aggrV, na.rm = TRUE)
+    pr <- c(pr, i)
+  }
+}
+pr <- r[pr,]
+#View(r[,c(1:5, 49:ncol(r))])
+
+
+
+rr <- list() 
+rr$IF2014 <- pr[pr$program == "IF" & grepl("2014", pr$revID, fixed = TRUE),]
+rr$IF2015 <- pr[pr$program == "IF" & grepl("2015", pr$revID, fixed = TRUE),]
+rr$IF2016 <- pr[pr$program == "IF" & grepl("2016", pr$revID, fixed = TRUE),]
+#rr$IF2017 <- pr[pr$program == "IF" & grepl("2017", pr$revID, fixed = TRUE),]
+rr$IvPa <- pr[pr$program == "IvP" & pr$panel == "A",]
+rr$IvPb <- pr[pr$program == "IvP" & pr$panel == "B",]
+rr$IvPc <- pr[pr$program == "IvP" & pr$panel == "C",]
+rr$IvPd <- pr[pr$program == "IvP" & pr$panel == "D",]
+rr$SNSF_hss <- r[r$program == "SNSF" & r$panel == "humanities and social sciences",]
+rr$SNSF_ns <- r[r$program == "SNSF" & r$panel == "natural sciences",]
+
+programs <- c("IvPa","IvPb","IvPc","IvPd","IF2014","IF2015","IF2016")#,"IF2017")
+SAmethod <- c("Ma", "Te", "Va")
+
+corrTable <- matrix(NA, nrow = 3, ncol = length(programs))
+
+for(s in 1:3) for (p in 1:length(programs)) {
+  t <- cor.test(
+    x = rr[[programs[p]]][,SAmethod[s]],
+    y = rr[[programs[p]]]$trueRank,
+    method = "spearman"
+  )
+  stars <- ""
+  if (!is.na(t$p.value) & t$p.value <= 0.05) {stars <- "*"}
+  if (!is.na(t$p.value) & t$p.value <= 0.01) {stars <- "**"}
+  if (!is.na(t$p.value) & t$p.value <= 0.001) {stars <- "***"}
+  
+  corrTable[s, p] <- paste0(round(t$estimate, digits = 3),stars)
+}
+
+corrTable <- as.data.frame(cbind(
+  c("Manual","TextBlob","VADER"), corrTable
+))
+names(corrTable) <- c("", programs)
+
+write_xlsx(corrTable, "./output/SFIreviews_rankcorr_table5a.xlsx")
+
+
+
+
+#### We do the same for SNSF data (unit of analysis: structured review)
+programs <- c("SNSF_hss","SNSF_ns")
+SAmethod <- c("aggrManual", "aggrT", "aggrV")
+
+corrTable <- matrix(NA, nrow = 3, ncol = length(programs))
+
+for(s in 1:3) for (p in 1:length(programs)) {
+  t <- cor.test(
+    x = rr[[programs[p]]][,SAmethod[s]],
+    y = rr[[programs[p]]]$trueScore,
+    method = "spearman"
+  )
+  stars <- ""
+  if (!is.na(t$p.value) & t$p.value <= 0.05) {stars <- "*"}
+  if (!is.na(t$p.value) & t$p.value <= 0.01) {stars <- "**"}
+  if (!is.na(t$p.value) & t$p.value <= 0.001) {stars <- "***"}
+  
+  corrTable[s, p] <- paste0(round(t$estimate, digits = 3),stars)
+}
+
+corrTable <- as.data.frame(cbind(
+  c("Manual","TextBlob","VADER"), corrTable
+))
+names(corrTable) <- c("", programs)
+
+write_xlsx(corrTable, "./output/SNSFreviews_rankcorr_table4.xlsx")
+
+
+
+
+# next we look into all bivariate correlations
+pr <- pr[!grepl("2017", pr$revID, fixed = TRUE),]
+
+corr <- Hmisc::rcorr(
+  as.matrix(cbind(pr$trueRank, pr$Ma, pr$Te, pr$Va)),
+  type = "spearman"
+)
+
+c <- as.data.frame(round(corr[[1]], digits = 3))
+names(c) <- c("actual ranking", "manual", "TextBlob","Vader")
+
+c <- cbind(names(c), c)
+names(c)[1] <- ""
+
+for (row in 1:nrow(c)){ for (col in 1:nrow(c)) {
+  stars <- ""
+  p_value <- corr[[3]][row,col]
+  if (!is.na(p_value) & p_value <= 0.05) {stars <- "*"}
+  if (!is.na(p_value) & p_value <= 0.01) {stars <- "**"}
+  if (!is.na(p_value) & p_value <= 0.001) {stars <- "***"}
+  c[row,col + 1] <- paste0(c[row,col + 1], stars)
+}}
+
+write_xlsx(c, "./output/SFIreviews_rankcorr_table5b.xlsx")
 
