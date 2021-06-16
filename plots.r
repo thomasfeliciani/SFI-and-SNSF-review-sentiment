@@ -1231,15 +1231,31 @@ r$Ma <- r$Te <- r$Va <- NA
 pr <- c()
 for (i in 1:nrow(r)) {
   if (substr(r$revID[i], nchar(r$revID[i]), nchar(r$revID[i])) == "a") {
-    r$Ma[i] <- mean(subset(r, r$propID == r$propID[i])$aggrManual, na.rm = TRUE)
-    r$Te[i] <- mean(subset(r, r$propID == r$propID[i])$aggrT, na.rm = TRUE)
-    r$Va[i] <- mean(subset(r, r$propID == r$propID[i])$aggrV, na.rm = TRUE)
+    
+    # Note that the sentiment score is reverse-coded - this is in order to
+    # procude a ranking where, like in the original ranking data, low ranking
+    # positions (e.g. 1st, 2nd etc.) mean good.
+    r$Ma[i] <- 2 - (1 + mean(subset(r, r$propID == r$propID[i])$aggrManual, na.rm = TRUE))
+    r$Te[i] <- 2 - (1 + mean(subset(r, r$propID == r$propID[i])$aggrT, na.rm = TRUE))
+    r$Va[i] <- 2 - (1 + mean(subset(r, r$propID == r$propID[i])$aggrV, na.rm = TRUE))
     pr <- c(pr, i)
   }
 }
 pr <- r[pr,]
 #View(r[,c(1:5, 49:ncol(r))])
 
+#test <- pr[pr$program == "IvP" & pr$panel == "A",]
+#test <- data.frame(
+#  propID = test$propID,
+#  trueRank = test$trueRank,
+#  manual = (2 - test$Ma) - 1,
+#  rankManual = rank(test$Ma, ties.method = "min"),
+#  TextBlob = (2 - test$Te) - 1,
+#  rankTextBlob = rank(test$Te, ties.method = "min"),
+#  VADER = (2 - test$Va) - 1,
+#  rankVADER = rank(test$Va, ties.method = "min")
+#)
+#writexl::write_xlsx(test, "./output/IvP_panel_A.xlsx")
 
 
 rr <- list() 
@@ -1278,7 +1294,7 @@ corrTable <- as.data.frame(cbind(
 ))
 names(corrTable) <- c("", programs)
 
-write_xlsx(corrTable, "./output/SFIreviews_rankcorr_table5a.xlsx")
+writexl::write_xlsx(corrTable, "./output/SFIreviews_rankcorr_table5a.xlsx")
 
 
 
