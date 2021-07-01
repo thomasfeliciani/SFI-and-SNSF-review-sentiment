@@ -232,7 +232,7 @@ dd <- dd[!is.na(dd$value),]
 
 
 figurePar <- list(
-  filename = paste0("./plots/Figure 2.", figureFormat),
+  filename = paste0("./plots/Figure 2b.", figureFormat),
   height = 1150,
   width = 1800,
   res = 300,
@@ -300,7 +300,7 @@ dd$Sscore[dd$Sscore == "1 to 3      "] <- 3
 dd$Sscore <- as.numeric(dd$Sscore)
 
 figurePar <- list(
-  filename = paste0("./plots/Figure 2b.", figureFormat),
+  filename = paste0("./plots/Figure 2.", figureFormat),
   height = 1300,
   width = 1800,
   res = 300,
@@ -409,7 +409,7 @@ dd <- dd[!is.na(dd$manual),]
 
 
 figurePar <- list(
-  filename = paste0("./plots/Figure 3.", figureFormat),
+  filename = paste0("./plots/Figure 3b.", figureFormat),
   height = 1500,
   width = 950,
   res = 300,
@@ -470,7 +470,7 @@ dev.off()
 
 
 figurePar <- list(
-  filename = paste0("./plots/Figure 3b.", figureFormat),
+  filename = paste0("./plots/Figure 3.", figureFormat),
   height = 1500,
   width = 950,
   res = 300,
