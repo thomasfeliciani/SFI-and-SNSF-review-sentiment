@@ -1,4 +1,4 @@
-# Runs on R-4.0.3
+# Runs on R-4.1.0
 
 # Clearing environment, loading libraries and dataset (not included in the
 # repository data).
@@ -1003,7 +1003,7 @@ ggplot(
   data = dd[dd$program == "SNSF",],
   aes(x = manual_raw, y = value, color = variable, fill = variable)
 ) +
-  geom_smooth(method = 'lm') +
+  stat_smooth(method = 'lm') +
   facet_wrap(~ section, nrow = 2) +
   xlab("manually coded sentiment") +
   ylab("algorithmic SA") +
@@ -1063,7 +1063,7 @@ ggplot(
   data = dd[dd$program == "SFI:IvP",],
   aes(x = manual_raw, y = value, color = variable, fill = variable)
 ) +
-  geom_smooth(method = 'lm') +
+  stat_smooth(method = 'lm') +
   facet_wrap(~ section, nrow = 1) +
   xlab("manually coded sentiment") +
   ylab("algorithmic SA") +
@@ -1124,7 +1124,7 @@ ggplot(
   data = dd[dd$program == "SFI:IF",],
   aes(x = manual_raw, y = value, color = variable, fill = variable)
 ) +
-  geom_smooth(method = 'lm') +
+  stat_smooth(method = 'lm') +
   facet_wrap(~ section, nrow = 1) +
   xlab("manually coded sentiment") +
   ylab("algorithmic SA") +
