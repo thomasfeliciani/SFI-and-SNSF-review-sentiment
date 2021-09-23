@@ -652,7 +652,7 @@ ggplot(
     na.rm = TRUE, color = "black", width = 0.15#, alpha = 0
   ) +
   ggtitle("SNSF statement-level reviews") +
-  ylab("manually coded sentiment") +
+  ylab("sentiment") +
   scale_y_continuous(
     limits = c(0,1.05),# expand = c(0, 0),
     breaks = c(0, 0.5, 1), minor_breaks = c(0.25, 0.75),
